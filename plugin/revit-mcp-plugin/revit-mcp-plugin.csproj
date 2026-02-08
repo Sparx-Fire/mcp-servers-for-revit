@@ -1,0 +1,102 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <RootNamespace>revit_mcp_plugin</RootNamespace>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <UseWindowsForms>true</UseWindowsForms>
+        <UseWPF>true</UseWPF>
+        <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+        <Configurations>Debug R20;Debug R21;Debug R22;Debug R24;Debug R25;Debug R26;Release R20;Release R21;Release R22;Release R23;Release R24;Release R25;Release R26;Debug R23</Configurations>
+        <PlatformTarget>x64</PlatformTarget>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$(Configuration.Contains('R20'))">
+        <RevitVersion>2020</RevitVersion>
+        <TargetFramework>net48</TargetFramework>
+        <OutputPath>bin\$(Configuration.Split(' ')[0])\$(RevitVersion)\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R21'))">
+        <RevitVersion>2021</RevitVersion>
+        <TargetFramework>net48</TargetFramework>
+        <OutputPath>bin\$(Configuration.Split(' ')[0])\$(RevitVersion)\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R22'))">
+        <RevitVersion>2022</RevitVersion>
+        <TargetFramework>net48</TargetFramework>
+        <OutputPath>bin\$(Configuration.Split(' ')[0])\$(RevitVersion)\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R23'))">
+        <RevitVersion>2023</RevitVersion>
+        <TargetFramework>net48</TargetFramework>
+        <OutputPath>bin\$(Configuration.Split(' ')[0])\$(RevitVersion)\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R24'))">
+        <RevitVersion>2024</RevitVersion>
+        <TargetFramework>net48</TargetFramework>
+        <OutputPath>bin\$(Configuration.Split(' ')[0])\$(RevitVersion)\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R25'))">
+        <RevitVersion>2025</RevitVersion>
+        <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+        <OutputPath>bin\$(Configuration.Split(' ')[0])\$(RevitVersion)\</OutputPath>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R26'))">
+        <RevitVersion>2026</RevitVersion>
+        <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+        <OutputPath>bin\$(Configuration.Split(' ')[0])\$(RevitVersion)\</OutputPath>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+    </PropertyGroup>
+    <PropertyGroup>
+        <StartAction>Program</StartAction>
+        <StartProgram>C:\Program Files\Autodesk\Revit $(RevitVersion)\Revit.exe</StartProgram>
+        <StartArguments>/language ENG</StartArguments>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*"/>
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*"/>
+        <PackageReference Include="RevitMCPSDK" Version="$(RevitVersion).*"/>
+        <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Resource Include="Core\Ressources\icon-16.png"/>
+        <Resource Include="Core\Ressources\icon-32.png"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Resource Include="Core\Ressources\settings-16.png"/>
+        <Resource Include="Core\Ressources\settings-32.png"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="revit-mcp.addin">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    <Target Name="CopyFiles" AfterTargets="CoreBuild">
+        <ItemGroup>
+            <RootItem Include="$(ProjectDir)*.addin"/>
+            <AddinItem Include="$(TargetDir)*.dll"/>
+            <AddinItem Include="$(TargetDir)*.pdb"/>
+        </ItemGroup>
+
+        <PropertyGroup>
+            <RootDir>bin\AddIn $(RevitVersion) $(Configuration)\</RootDir>
+            <AddinDir>$(RootDir)$(RootNameSpace)\</AddinDir>
+        </PropertyGroup>
+
+        <Copy SourceFiles="@(RootItem)" DestinationFolder="$(RootDir)"/>
+        <Copy SourceFiles="@(AddinItem)" DestinationFolder="$(AddinDir)"/>
+
+        <ItemGroup>
+            <AddinFiles Include="$(RootDir)**\*.*"/>
+        </ItemGroup>
+        <Message Text="Copy files to Addin folder" Importance="high"/>
+        <Copy SourceFiles="@(AddinFiles)" DestinationFolder="$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)\%(RecursiveDir)" Condition="$(Configuration.Contains('Debug'))"/>
+    </Target>
+
+</Project>

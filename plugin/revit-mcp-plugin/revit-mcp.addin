@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>revit-mcp</Name>
+    <Assembly>revit_mcp_plugin/revit-mcp-plugin.dll</Assembly>
+    <FullClassName>revit_mcp_plugin.Core.Application</FullClassName>
+    <ClientId>090A4C8C-61DC-426D-87DF-E4BAE0F80EC1</ClientId>
+    <VendorId>revit-mcp</VendorId>
+    <VendorDescription>https://github.com/revit-mcp/revit-mcp</VendorDescription>
+  </AddIn>
+</RevitAddIns>
