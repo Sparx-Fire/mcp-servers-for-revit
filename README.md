@@ -66,7 +66,7 @@ The MCP server is published as an npm package and can be run directly with `npx`
 **Claude Code**
 
 ```bash
-claude mcp add mcp-servers-for-revit -- npx -y @sparx-fire/mcp-servers-for-revit
+claude mcp add mcp-servers-for-revit -- cmd /c npx -y @sparx-fire/mcp-servers-for-revit
 ```
 
 **Claude Desktop**
@@ -77,8 +77,8 @@ Claude Desktop → Settings → Developer → Edit Config → `claude_desktop_co
 {
     "mcpServers": {
         "mcp-servers-for-revit": {
-            "command": "npx",
-            "args": ["-y", "@sparx-fire/mcp-servers-for-revit"]
+            "command": "cmd",
+            "args": ["/c", "npx", "-y", "@sparx-fire/mcp-servers-for-revit"]
         }
     }
 }
