@@ -264,22 +264,13 @@ A single `v*` tag drives the entire release. The [release workflow](.github/work
 
 To create a release:
 
-1. Bump the version in all projects:
-   ```bash
-   # MCP server (updates package.json + package-lock.json, no commit/tag)
-   cd server
-   npm version <major|minor|patch> --no-git-tag-version
-   cd ..
-
-   # Revit plugin — update AssemblyVersion and AssemblyFileVersion
-   # in plugin/Properties/AssemblyInfo.cs to match (e.g. X.Y.Z.0)
+1. Run the bump script (updates `server/package.json`, `server/package-lock.json`, and `plugin/Properties/AssemblyInfo.cs`, then commits and tags):
+   ```powershell
+   ./scripts/bump-version.ps1 -Version X.Y.Z
    ```
 
-2. Commit, tag, and push:
+2. Push to trigger the workflow:
    ```bash
-   git add server/package.json server/package-lock.json plugin/Properties/AssemblyInfo.cs
-   git commit -m "Bump version to vX.Y.Z"
-   git tag vX.Y.Z
    git push origin main --tags
    ```
 
