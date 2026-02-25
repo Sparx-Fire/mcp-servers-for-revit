@@ -46,7 +46,7 @@ Write-Host "plugin/Properties/AssemblyInfo.cs -> $fourPart"
 # --- git commit + tag ---
 Push-Location $root
 git add server/package.json server/package-lock.json plugin/Properties/AssemblyInfo.cs
-git commit -m "Bump version to v$Version"
+git commit -m "$Version"
 git tag "v$Version"
 Pop-Location
 
