@@ -7,6 +7,21 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
+# --- confirm ---
+Write-Host "This will discard all uncommitted changes, checkout main, and pull." -ForegroundColor Yellow
+$answer = Read-Host "Continue? (y/N)"
+if ($answer -ne 'y') {
+    Write-Host "Aborted."
+    exit 0
+}
+
+# --- reset to latest main ---
+Push-Location $root
+git checkout main
+git reset --hard
+git pull
+Pop-Location
+
 # --- server/package.json ---
 $pkg = Get-Content "$root/server/package.json" -Raw | ConvertFrom-Json
 $pkg.version = $Version
