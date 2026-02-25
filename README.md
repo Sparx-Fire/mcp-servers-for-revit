@@ -266,7 +266,7 @@ To create a release:
 
 1. Run the bump script (updates `server/package.json`, `server/package-lock.json`, and `plugin/Properties/AssemblyInfo.cs`, then commits and tags):
    ```powershell
-   ./scripts/bump-version.ps1 -Version X.Y.Z
+   ./scripts/release.ps1 -Version X.Y.Z
    ```
 
 2. Push to trigger the workflow:
