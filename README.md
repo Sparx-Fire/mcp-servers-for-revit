@@ -254,6 +254,28 @@ mcp-servers-for-revit/
 └── README.md
 ```
 
+## Releasing
+
+1. Update the version in `server/package.json` and `server/package-lock.json`:
+   ```bash
+   cd server
+   npm version <major|minor|patch> --no-git-tag-version
+   ```
+
+2. Commit the version bump:
+   ```bash
+   git add server/package.json server/package-lock.json
+   git commit -m "Bump version to vX.Y.Z"
+   ```
+
+3. Tag the commit and push to trigger the release workflow:
+   ```bash
+   git tag vX.Y.Z
+   git push origin main --tags
+   ```
+
+   The `v*` tag triggers the [release workflow](.github/workflows/release.yml), which builds the Revit plugin for all supported versions and creates a GitHub release with the ZIP assets.
+
 ## Acknowledgements
 
 This project is a fork of the work by the [mcp-servers-for-revit](https://github.com/mcp-servers-for-revit) team. The original repositories:
