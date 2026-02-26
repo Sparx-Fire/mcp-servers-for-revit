@@ -119,6 +119,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
       - name: Install and build
         working-directory: server
         run: |
