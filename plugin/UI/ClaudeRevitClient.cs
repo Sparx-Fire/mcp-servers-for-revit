@@ -17,7 +17,7 @@ namespace revit_mcp_plugin.UI
         private readonly List<JObject> _conversationHistory = new List<JObject>();
         private string _apiKey;
         private const string API_URL = "https://api.anthropic.com/v1/messages";
-        private string _model = "claude-sonnet-4-20250514";
+        private string _model = "claude-sonnet-4-6";
         private const int MCP_PORT = 8080;
         private CancellationTokenSource _cts;
 
