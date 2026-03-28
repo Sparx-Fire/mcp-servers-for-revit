@@ -212,6 +212,14 @@ namespace revit_mcp_plugin.UI
                 _client.ThinkingEnabled = _planningMode;
         }
 
+        public void OnRetrying(int seconds)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                TypingText.Text = $"Rate limit — riprovo tra {seconds}s...";
+            }));
+        }
+
         public void OnThinkingReceived(string thinkingText)
         {
             Dispatcher.BeginInvoke(new Action(() =>
@@ -225,6 +233,12 @@ namespace revit_mcp_plugin.UI
                 _messages.Add(new ChatMessage("thinking", summary));
                 ChatScrollViewer.ScrollToEnd();
             }));
+        }
+
+        private void StopButton_Click(object sender, MouseButtonEventArgs e)
+        {
+            _client?.Cancel();
+            TypingText.Text = "Annullamento...";
         }
 
         private void ClearChat_Click(object sender, MouseButtonEventArgs e)

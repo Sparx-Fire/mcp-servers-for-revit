@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -18,6 +19,12 @@ namespace revit_mcp_plugin.UI
         private const string API_URL = "https://api.anthropic.com/v1/messages";
         private string _model = "claude-sonnet-4-20250514";
         private const int MCP_PORT = 8080;
+        private CancellationTokenSource _cts;
+
+        public void Cancel()
+        {
+            _cts?.Cancel();
+        }
 
         private const string SYSTEM_PROMPT = @"Sei Claude, un assistente AI integrato direttamente in Autodesk Revit. Hai accesso a tool che eseguono comandi sul modello Revit attivo in tempo reale.
 
@@ -84,9 +91,15 @@ Categorie comuni: OST_Walls, OST_Floors, OST_Doors, OST_Windows, OST_StructuralC
             while (_conversationHistory.Count > 30)
                 _conversationHistory.RemoveAt(0);
 
+            _cts = new CancellationTokenSource();
+
             try
             {
                 return await ProcessConversation();
+            }
+            catch (OperationCanceledException)
+            {
+                return "Operazione annullata.";
             }
             catch (Exception ex)
             {
@@ -188,41 +201,70 @@ Categorie comuni: OST_Walls, OST_Floors, OST_Doors, OST_Windows, OST_StructuralC
                 };
             }
 
-            var request = (HttpWebRequest)WebRequest.Create(API_URL);
-            request.Method = "POST";
-            request.ContentType = "application/json";
-            request.Headers.Add("x-api-key", _apiKey);
-            request.Headers.Add("anthropic-version", "2023-06-01");
-            request.Timeout = _thinkingEnabled ? 180000 : 60000;
-
             byte[] data = Encoding.UTF8.GetBytes(requestBody.ToString());
-            using (var stream = await Task.Factory.FromAsync(request.BeginGetRequestStream, request.EndGetRequestStream, null))
-            {
-                await stream.WriteAsync(data, 0, data.Length);
-            }
+            int maxRetries = 3;
 
-            try
+            for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-                using (var response = (HttpWebResponse)await Task.Factory.FromAsync(request.BeginGetResponse, request.EndGetResponse, null))
-                using (var reader = new StreamReader(response.GetResponseStream()))
+                _cts?.Token.ThrowIfCancellationRequested();
+
+                var request = (HttpWebRequest)WebRequest.Create(API_URL);
+                request.Method = "POST";
+                request.ContentType = "application/json";
+                request.Headers.Add("x-api-key", _apiKey);
+                request.Headers.Add("anthropic-version", "2023-06-01");
+                request.Timeout = _thinkingEnabled ? 180000 : 60000;
+
+                using (var stream = await Task.Factory.FromAsync(request.BeginGetRequestStream, request.EndGetRequestStream, null))
                 {
-                    string responseText = await reader.ReadToEndAsync();
-                    return JObject.Parse(responseText);
+                    await stream.WriteAsync(data, 0, data.Length);
                 }
-            }
-            catch (WebException ex)
-            {
-                if (ex.Response != null)
+
+                try
                 {
-                    using (var reader = new StreamReader(ex.Response.GetResponseStream()))
+                    using (var response = (HttpWebResponse)await Task.Factory.FromAsync(request.BeginGetResponse, request.EndGetResponse, null))
+                    using (var reader = new StreamReader(response.GetResponseStream()))
                     {
-                        string errorText = await reader.ReadToEndAsync();
-                        var errorJson = JObject.Parse(errorText);
-                        throw new Exception($"API Error: {errorJson["error"]?["message"]}");
+                        string responseText = await reader.ReadToEndAsync();
+                        return JObject.Parse(responseText);
                     }
                 }
-                throw;
+                catch (WebException ex)
+                {
+                    var httpResponse = ex.Response as HttpWebResponse;
+
+                    // Rate limit (429) or overloaded (529) — retry with backoff
+                    if (httpResponse != null &&
+                        ((int)httpResponse.StatusCode == 429 || (int)httpResponse.StatusCode == 529) &&
+                        attempt < maxRetries - 1)
+                    {
+                        int delayMs = (int)Math.Pow(2, attempt + 1) * 1000; // 2s, 4s
+                        MCPDockablePanel.Instance?.OnRetrying(delayMs / 1000);
+                        await Task.Delay(delayMs, _cts?.Token ?? CancellationToken.None);
+                        continue;
+                    }
+
+                    if (ex.Response != null)
+                    {
+                        using (var reader = new StreamReader(ex.Response.GetResponseStream()))
+                        {
+                            string errorText = await reader.ReadToEndAsync();
+                            try
+                            {
+                                var errorJson = JObject.Parse(errorText);
+                                throw new Exception($"API Error: {errorJson["error"]?["message"]}");
+                            }
+                            catch (JsonReaderException)
+                            {
+                                throw new Exception($"API Error ({(int)httpResponse?.StatusCode}): {errorText}");
+                            }
+                        }
+                    }
+                    throw;
+                }
             }
+
+            throw new Exception("Max retries exceeded");
         }
 
         private async Task<string> ExecuteMcpCommand(string commandName, JObject parameters)

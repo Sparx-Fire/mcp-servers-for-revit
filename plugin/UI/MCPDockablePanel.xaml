@@ -76,6 +76,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Width="24" Height="24" CornerRadius="6"
                         Background="#D97757" Margin="0,0,14,0">
@@ -84,6 +85,11 @@
                 </Border>
                 <TextBlock Grid.Column="1" x:Name="TypingText" Text="Claude sta pensando..."
                            Foreground="#999" FontSize="14" FontStyle="Italic" VerticalAlignment="Center"/>
+                <Border Grid.Column="2" CornerRadius="10" Padding="8,3" Margin="8,0,0,0"
+                        Background="#F0EEEB" BorderBrush="#D4D1CC" BorderThickness="1"
+                        Cursor="Hand" MouseLeftButtonDown="StopButton_Click">
+                    <TextBlock Text="Stop" FontSize="10" Foreground="#888" VerticalAlignment="Center"/>
+                </Border>
             </Grid>
         </Border>
 
