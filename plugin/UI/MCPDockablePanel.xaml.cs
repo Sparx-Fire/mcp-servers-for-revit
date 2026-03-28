@@ -28,13 +28,10 @@ namespace revit_mcp_plugin.UI
             _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
             _statusTimer.Tick += (s, e) => UpdateStatus();
 
-            AddMessage("assistant", "Ciao! Sono Claude integrato in Revit con accesso diretto al modello.\n\n" +
-                "Posso eseguire comandi sul progetto aperto. Prova:\n" +
-                "- \"Che progetto ho aperto?\"\n" +
-                "- \"Fai un audit del modello\"\n" +
-                "- \"Crea un livello a 15000mm\"\n" +
-                "- \"Mostra i warning\"\n" +
-                "- \"Crea 4 muri a rettangolo 10x8 metri\"");
+            AddMessage("assistant",
+                "Ciao! Sono Claude, il tuo assistente per Revit.\n\n" +
+                "Ho accesso diretto al modello aperto e posso eseguire operazioni in tempo reale. " +
+                "Chiedimi qualsiasi cosa sul progetto o dimmi cosa creare.");
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
@@ -48,12 +45,12 @@ namespace revit_mcp_plugin.UI
         {
             try
             {
-                bool isRunning = Core.SocketService.Instance.IsRunning;
-                StatusIndicator.Fill = new SolidColorBrush(isRunning
-                    ? Color.FromRgb(68, 204, 136)
-                    : Color.FromRgb(255, 68, 68));
-                StatusText.Text = isRunning ? "MCP On" : "MCP Off";
-                StatusText.Foreground = StatusIndicator.Fill;
+                bool running = Core.SocketService.Instance.IsRunning;
+                StatusIndicator.Fill = new SolidColorBrush(running
+                    ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                StatusText.Text = running ? "MCP Online" : "MCP Offline";
+                StatusText.Foreground = new SolidColorBrush(running
+                    ? Color.FromRgb(76, 175, 80) : Color.FromRgb(136, 136, 136));
             }
             catch { }
         }
@@ -84,7 +81,8 @@ namespace revit_mcp_plugin.UI
             {
                 if (!Core.SocketService.Instance.IsRunning)
                 {
-                    AddMessage("assistant", "Server MCP non attivo. Clicca 'Revit MCP Switch' nel ribbon per avviarlo.");
+                    AddMessage("assistant",
+                        "Il server MCP non e' attivo. Clicca \"Revit MCP Switch\" nel ribbon per avviarlo.");
                     return;
                 }
 
@@ -93,7 +91,7 @@ namespace revit_mcp_plugin.UI
             }
             catch (Exception ex)
             {
-                AddMessage("assistant", $"Errore: {ex.Message}");
+                AddMessage("assistant", $"Si e' verificato un errore: {ex.Message}");
             }
             finally
             {
@@ -116,8 +114,8 @@ namespace revit_mcp_plugin.UI
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                TypingText.Text = $"Eseguo: {toolName}...";
-                _messages.Add(new ChatMessage("tool", $"[{toolName}]"));
+                TypingText.Text = $"Eseguo {toolName}...";
+                _messages.Add(new ChatMessage("tool", toolName));
                 ChatScrollViewer.ScrollToEnd();
             }));
         }
@@ -128,6 +126,7 @@ namespace revit_mcp_plugin.UI
         {
             _messages.Clear();
             _client.ClearHistory();
+            AddMessage("assistant", "Chat azzerata. Come posso aiutarti?");
         }
     }
 
@@ -136,12 +135,16 @@ namespace revit_mcp_plugin.UI
         public string Role { get; }
         public string Text { get; }
         public string RoleLabel { get; }
-        public Thickness LabelMargin { get; }
-        public Thickness BubbleMargin { get; }
-        public string BubbleAlignment { get; }
+        public string AvatarLetter { get; }
+        public SolidColorBrush AvatarBackground { get; }
+        public SolidColorBrush RoleLabelColor { get; }
         public SolidColorBrush TextColor { get; }
-        public SolidColorBrush BubbleBackground { get; }
+        public SolidColorBrush RowBackground { get; }
         public FontFamily FontFamily { get; }
+
+        private static readonly SolidColorBrush ClaudeOrange = new SolidColorBrush(Color.FromRgb(217, 119, 87));
+        private static readonly SolidColorBrush UserBlue = new SolidColorBrush(Color.FromRgb(88, 130, 207));
+        private static readonly SolidColorBrush ToolGreen = new SolidColorBrush(Color.FromRgb(76, 175, 80));
 
         public ChatMessage(string role, string text)
         {
@@ -152,29 +155,29 @@ namespace revit_mcp_plugin.UI
             {
                 case "user":
                     RoleLabel = "Tu";
-                    LabelMargin = new Thickness(0, 2, 12, 0);
-                    BubbleMargin = new Thickness(50, 0, 8, 0);
-                    BubbleAlignment = "Right";
-                    TextColor = new SolidColorBrush(Color.FromRgb(224, 224, 240));
-                    BubbleBackground = new SolidColorBrush(Color.FromRgb(59, 59, 92));
+                    AvatarLetter = "L";
+                    AvatarBackground = UserBlue;
+                    RoleLabelColor = UserBlue;
+                    TextColor = new SolidColorBrush(Color.FromRgb(232, 232, 232));
+                    RowBackground = new SolidColorBrush(Color.FromRgb(43, 43, 43));
                     FontFamily = new FontFamily("Segoe UI");
                     break;
                 case "tool":
                     RoleLabel = "";
-                    LabelMargin = new Thickness(12, 2, 0, 0);
-                    BubbleMargin = new Thickness(8, 0, 50, 0);
-                    BubbleAlignment = "Left";
-                    TextColor = new SolidColorBrush(Color.FromRgb(100, 200, 120));
-                    BubbleBackground = new SolidColorBrush(Color.FromRgb(30, 42, 30));
+                    AvatarLetter = "⚡";
+                    AvatarBackground = ToolGreen;
+                    RoleLabelColor = ToolGreen;
+                    TextColor = ToolGreen;
+                    RowBackground = new SolidColorBrush(Color.FromRgb(35, 45, 35));
                     FontFamily = new FontFamily("Consolas");
                     break;
                 default:
                     RoleLabel = "Claude";
-                    LabelMargin = new Thickness(12, 2, 0, 0);
-                    BubbleMargin = new Thickness(8, 0, 50, 0);
-                    BubbleAlignment = "Left";
-                    TextColor = new SolidColorBrush(Color.FromRgb(200, 200, 220));
-                    BubbleBackground = new SolidColorBrush(Color.FromRgb(42, 42, 60));
+                    AvatarLetter = "C";
+                    AvatarBackground = ClaudeOrange;
+                    RoleLabelColor = ClaudeOrange;
+                    TextColor = new SolidColorBrush(Color.FromRgb(210, 210, 210));
+                    RowBackground = new SolidColorBrush(Color.FromRgb(48, 48, 48));
                     FontFamily = new FontFamily("Segoe UI");
                     break;
             }
