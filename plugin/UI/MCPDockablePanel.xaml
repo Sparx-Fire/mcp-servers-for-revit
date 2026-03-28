@@ -4,150 +4,97 @@
       Background="#1E1E2E" Loaded="Page_Loaded">
 
     <Page.Resources>
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#2A2A3C"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="12"/>
-            <Setter Property="Margin" Value="8,4"/>
-        </Style>
-        <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#9090A8"/>
-            <Setter Property="FontSize" Value="11"/>
-        </Style>
-        <Style x:Key="ValueStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#E0E0F0"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-        </Style>
-        <Style x:Key="LogItemStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#C0C0D8"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontFamily" Value="Consolas"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Margin" Value="0,2"/>
-        </Style>
+        <!-- Placeholder for future styles -->
     </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#353550" Padding="12,10">
+        <Border Grid.Row="0" Background="#353550" Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Claude" Foreground="White" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock Text=" for Revit" Foreground="#8080A0" FontSize="15" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Ellipse x:Name="StatusIndicator" Width="8" Height="8" Fill="#FF4444" Margin="0,0,4,0"/>
+                    <TextBlock x:Name="StatusText" Text="Offline" Foreground="#FF6666" FontSize="10" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Grid.Column="2" x:Name="ClearChatLink" Text="Clear" Foreground="#6688CC" FontSize="11"
+                           Cursor="Hand" MouseLeftButtonDown="ClearChat_Click" TextDecorations="Underline" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Chat Messages -->
+        <ScrollViewer Grid.Row="1" x:Name="ChatScrollViewer" VerticalScrollBarVisibility="Auto" Padding="0,4">
+            <ItemsControl x:Name="ChatMessages">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <!-- Role label -->
+                            <TextBlock Text="{Binding RoleLabel}" Foreground="#606080" FontSize="9" Margin="{Binding LabelMargin}"/>
+                            <!-- Message bubble -->
+                            <Border Background="{Binding BubbleBackground}" CornerRadius="10" Padding="12,8" Margin="{Binding BubbleMargin}" MaxWidth="500" HorizontalAlignment="{Binding BubbleAlignment}">
+                                <TextBlock Text="{Binding Text}" Foreground="{Binding TextColor}" FontSize="12" TextWrapping="Wrap" FontFamily="{Binding FontFamily}"/>
+                            </Border>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Typing indicator -->
+        <Border Grid.Row="2" x:Name="TypingIndicator" Visibility="Collapsed" Padding="12,4" Background="#1E1E2E">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Claude is thinking" Foreground="#6060A0" FontSize="11" FontStyle="Italic"/>
+                <TextBlock x:Name="TypingDots" Text="..." Foreground="#6060A0" FontSize="11" FontStyle="Italic"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Input Area -->
+        <Border Grid.Row="3" Background="#252538" Padding="8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="MCP Server" Foreground="White" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <TextBlock Text=" for Revit" Foreground="#8080A0" FontSize="15" VerticalAlignment="Center"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse x:Name="StatusIndicator" Width="10" Height="10" Fill="#FF4444" Margin="0,0,6,0"/>
-                    <TextBlock x:Name="StatusText" Text="Offline" Foreground="#FF6666" FontSize="12" VerticalAlignment="Center"/>
-                </StackPanel>
+                <TextBox x:Name="ChatInput" Grid.Column="0"
+                         Background="#2A2A3C" Foreground="#E0E0F0" CaretBrush="#E0E0F0"
+                         BorderBrush="#3A3A4C" BorderThickness="1"
+                         Padding="10,8" FontSize="13"
+                         AcceptsReturn="False"
+                         KeyDown="ChatInput_KeyDown"
+                         VerticalContentAlignment="Center">
+                    <TextBox.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </TextBox.Resources>
+                </TextBox>
+                <Button x:Name="SendButton" Grid.Column="1"
+                        Content="Send" Click="Send_Click"
+                        Background="#5B5BD6" Foreground="White"
+                        BorderThickness="0" Padding="16,8"
+                        FontSize="12" FontWeight="SemiBold"
+                        Margin="6,0,0,0" Cursor="Hand">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
             </Grid>
-        </Border>
-
-        <!-- Connection Info -->
-        <Border Grid.Row="1" Style="{StaticResource CardStyle}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
-                <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,0,6">
-                    <TextBlock Text="PORT" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock x:Name="PortText" Text="8080" Style="{StaticResource ValueStyle}"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,0,6">
-                    <TextBlock Text="UPTIME" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock x:Name="UptimeText" Text="--:--:--" Style="{StaticResource ValueStyle}"/>
-                </StackPanel>
-                <StackPanel Grid.Column="0" Grid.Row="1">
-                    <TextBlock Text="COMMANDS" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock x:Name="CommandCountText" Text="0" Style="{StaticResource ValueStyle}"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Grid.Row="1">
-                    <TextBlock Text="REGISTERED" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock x:Name="RegisteredCountText" Text="0" Style="{StaticResource ValueStyle}"/>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Stats Bar -->
-        <Border Grid.Row="2" Style="{StaticResource CardStyle}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                    <TextBlock Text="SUCCESS" Style="{StaticResource LabelStyle}" HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="SuccessCountText" Text="0" Foreground="#44CC88" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                    <TextBlock Text="ERRORS" Style="{StaticResource LabelStyle}" HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="ErrorCountText" Text="0" Foreground="#FF6666" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                    <TextBlock Text="AVG (ms)" Style="{StaticResource LabelStyle}" HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="AvgTimeText" Text="--" Foreground="#66AAFF" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Command Log -->
-        <Border Grid.Row="3" Style="{StaticResource CardStyle}">
-            <DockPanel>
-                <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
-                    <TextBlock Text="Command Log" Foreground="#9090A8" FontSize="12" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="ClearLogLink" Text="Clear" Foreground="#6688CC" FontSize="11" HorizontalAlignment="Right"
-                               Cursor="Hand" MouseLeftButtonDown="ClearLog_Click" TextDecorations="Underline"/>
-                </Grid>
-                <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl x:Name="LogItems">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border BorderBrush="#3A3A4C" BorderThickness="0,0,0,1" Padding="0,4">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Ellipse Grid.Column="0" Width="6" Height="6" Fill="{Binding StatusColor}" Margin="0,4,8,0" VerticalAlignment="Top"/>
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock Text="{Binding CommandName}" Foreground="#E0E0F0" FontSize="12" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding Message}" Foreground="#8080A0" FontSize="10" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Right">
-                                            <TextBlock Text="{Binding TimeStamp}" Foreground="#606080" FontSize="9"/>
-                                            <TextBlock Text="{Binding Duration}" Foreground="#606080" FontSize="9" HorizontalAlignment="Right"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </DockPanel>
-        </Border>
-
-        <!-- Footer -->
-        <Border Grid.Row="4" Background="#252538" Padding="12,8">
-            <TextBlock Text="Revit MCP Server v1.1.0 | 62 tools available" Foreground="#606080" FontSize="10" HorizontalAlignment="Center"/>
         </Border>
     </Grid>
 </Page>
