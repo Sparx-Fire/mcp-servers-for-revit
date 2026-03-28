@@ -193,7 +193,7 @@ Categorie comuni: OST_Walls, OST_Floors, OST_Doors, OST_Windows, OST_StructuralC
             request.ContentType = "application/json";
             request.Headers.Add("x-api-key", _apiKey);
             request.Headers.Add("anthropic-version", "2023-06-01");
-            request.Timeout = 60000;
+            request.Timeout = _thinkingEnabled ? 180000 : 60000;
 
             byte[] data = Encoding.UTF8.GetBytes(requestBody.ToString());
             using (var stream = await Task.Factory.FromAsync(request.BeginGetRequestStream, request.EndGetRequestStream, null))

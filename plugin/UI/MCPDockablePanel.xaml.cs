@@ -22,7 +22,7 @@ namespace revit_mcp_plugin.UI
 
         private static readonly List<ModelOption> AvailableModels = new List<ModelOption>
         {
-            new ModelOption("Haiku 3.5", "claude-haiku-4-5-20251001"),
+            new ModelOption("Haiku 4.5", "claude-haiku-4-5-20251001"),
             new ModelOption("Sonnet 4", "claude-sonnet-4-20250514"),
             new ModelOption("Opus 4", "claude-opus-4-20250514"),
         };
