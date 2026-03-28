@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Newtonsoft.Json.Linq;
 
 namespace revit_mcp_plugin.UI
 {
@@ -35,7 +37,7 @@ namespace revit_mcp_plugin.UI
 
             // Populate model selector
             ModelSelector.ItemsSource = AvailableModels;
-            ModelSelector.SelectedIndex = 1; // Sonnet 4 default
+            ModelSelector.SelectedIndex = LoadSavedModelIndex();
 
             _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
             _statusTimer.Tick += (s, e) => UpdateStatus();
@@ -147,12 +149,46 @@ namespace revit_mcp_plugin.UI
 
         public void LogCommand(string commandName, bool success, string message, double durationMs) { }
 
+        private static readonly string SettingsPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".claude", "revit_chat_settings.json");
+
         private void ModelSelector_Changed(object sender, SelectionChangedEventArgs e)
         {
-            if (ModelSelector.SelectedItem is ModelOption selected && _client != null)
+            if (ModelSelector.SelectedItem is ModelOption selected)
             {
-                _client.Model = selected.ModelId;
+                if (_client != null)
+                    _client.Model = selected.ModelId;
+                SaveModelIndex(ModelSelector.SelectedIndex);
             }
+        }
+
+        private static int LoadSavedModelIndex()
+        {
+            try
+            {
+                if (File.Exists(SettingsPath))
+                {
+                    var json = JObject.Parse(File.ReadAllText(SettingsPath));
+                    int idx = json["modelIndex"]?.Value<int>() ?? 1;
+                    return idx >= 0 && idx < AvailableModels.Count ? idx : 1;
+                }
+            }
+            catch { }
+            return 1; // Sonnet 4 default
+        }
+
+        private static void SaveModelIndex(int index)
+        {
+            try
+            {
+                string dir = Path.GetDirectoryName(SettingsPath);
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+                File.WriteAllText(SettingsPath,
+                    new JObject { ["modelIndex"] = index }.ToString());
+            }
+            catch { }
         }
 
         private void PlanningToggle_Click(object sender, MouseButtonEventArgs e)
@@ -180,7 +216,13 @@ namespace revit_mcp_plugin.UI
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                _messages.Add(new ChatMessage("thinking", thinkingText));
+                // Show a compact summary instead of the full thinking text
+                int charCount = thinkingText.Length;
+                string firstLine = thinkingText.Split('\n')[0];
+                if (firstLine.Length > 120)
+                    firstLine = firstLine.Substring(0, 120) + "...";
+                string summary = $"{firstLine}\n[{charCount:N0} caratteri di ragionamento]";
+                _messages.Add(new ChatMessage("thinking", summary));
                 ChatScrollViewer.ScrollToEnd();
             }));
         }

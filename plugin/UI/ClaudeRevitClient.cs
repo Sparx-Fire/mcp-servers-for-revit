@@ -241,24 +241,35 @@ Categorie comuni: OST_Walls, OST_Floors, OST_Doors, OST_Windows, OST_StructuralC
 
                 using (var client = new TcpClient())
                 {
-                    await client.ConnectAsync("127.0.0.1", MCP_PORT);
+                    // Connect with timeout
+                    var connectTask = client.ConnectAsync("127.0.0.1", MCP_PORT);
+                    if (await Task.WhenAny(connectTask, Task.Delay(10000)) != connectTask)
+                        return "MCP command failed: Connection timeout (server not responding)";
+                    await connectTask; // propagate any connection exception
+
                     var stream = client.GetStream();
 
                     byte[] requestData = Encoding.UTF8.GetBytes(request);
                     await stream.WriteAsync(requestData, 0, requestData.Length);
 
-                    // Read response
-                    byte[] buffer = new byte[65536];
+                    // Read response with streaming buffer (no 65KB limit)
+                    byte[] buffer = new byte[8192];
                     var responseBuilder = new StringBuilder();
                     int bytesRead;
 
-                    client.ReceiveTimeout = 30000;
-                    do
+                    client.ReceiveTimeout = 120000;
+
+                    // Read first chunk (blocks until data arrives)
+                    bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                    responseBuilder.Append(Encoding.UTF8.GetString(buffer, 0, bytesRead));
+
+                    // Continue reading if more data is available
+                    while (stream.DataAvailable)
                     {
                         bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                        if (bytesRead == 0) break;
                         responseBuilder.Append(Encoding.UTF8.GetString(buffer, 0, bytesRead));
                     }
-                    while (stream.DataAvailable);
 
                     string responseStr = responseBuilder.ToString();
                     var responseJson = JObject.Parse(responseStr);
