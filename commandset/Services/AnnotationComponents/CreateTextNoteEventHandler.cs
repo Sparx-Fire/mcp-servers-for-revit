@@ -1,0 +1,162 @@
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using RevitMCPCommandSet.Models.Common;
+using RevitMCPSDK.API.Interfaces;
+
+namespace RevitMCPCommandSet.Services.AnnotationComponents
+{
+    public class CreateTextNoteEventHandler : IExternalEventHandler, IWaitableExternalEventHandler
+    {
+        private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
+
+        public List<TextNoteData> TextNotes { get; set; }
+        public AIResult<List<object>> Result { get; private set; }
+
+        public bool WaitForCompletion(int timeoutMilliseconds = 10000)
+        {
+            _resetEvent.Reset();
+            return _resetEvent.WaitOne(timeoutMilliseconds);
+        }
+
+        public void Execute(UIApplication app)
+        {
+            try
+            {
+                var doc = app.ActiveUIDocument.Document;
+                var results = new List<object>();
+                int _successCount = 0;
+
+                using (var transaction = new Transaction(doc, "Create Text Notes"))
+                {
+                    transaction.Start();
+
+                    foreach (var data in TextNotes)
+                    {
+                        try
+                        {
+                            // Get view
+                            View view;
+                            if (data.ViewId > 0)
+                            {
+#if REVIT2024_OR_GREATER
+                                view = doc.GetElement(new ElementId(data.ViewId)) as View;
+#else
+                                view = doc.GetElement(new ElementId((int)data.ViewId)) as View;
+#endif
+                                if (view == null)
+                                    throw new ArgumentException($"View with ID {data.ViewId} not found");
+                            }
+                            else
+                            {
+                                view = doc.ActiveView;
+                            }
+
+                            // Get text note type
+                            ElementId typeId;
+                            if (data.TextNoteTypeId > 0)
+                            {
+#if REVIT2024_OR_GREATER
+                                typeId = new ElementId(data.TextNoteTypeId);
+#else
+                                typeId = new ElementId((int)data.TextNoteTypeId);
+#endif
+                            }
+                            else
+                            {
+                                // Use default text note type
+                                var defaultType = new FilteredElementCollector(doc)
+                                    .OfClass(typeof(TextNoteType))
+                                    .Cast<TextNoteType>()
+                                    .FirstOrDefault();
+
+                                typeId = defaultType?.Id ?? throw new InvalidOperationException("No text note type found in project");
+                            }
+
+                            XYZ position = JZPoint.ToXYZ(data.Position);
+
+                            var options = new TextNoteOptions
+                            {
+                                TypeId = typeId,
+                                HorizontalAlignment = ParseAlignment(data.HorizontalAlignment)
+                            };
+
+                            var textNote = TextNote.Create(doc, view.Id, position, data.Text, options);
+
+                            // Set width if specified
+                            if (data.Width > 0)
+                            {
+                                textNote.Width = data.Width / 304.8;
+                            }
+
+                            _successCount++;
+                            results.Add(new
+                            {
+#if REVIT2024_OR_GREATER
+                                textNoteId = textNote.Id.Value,
+#else
+                                textNoteId = textNote.Id.IntegerValue,
+#endif
+                                text = data.Text,
+                                success = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            results.Add(new
+                            {
+                                textNoteId = -1L,
+                                text = data.Text,
+                                success = false,
+                                error = ex.Message
+                            });
+                        }
+                    }
+
+                    transaction.Commit();
+                }
+
+                Result = new AIResult<List<object>>
+                {
+                    Success = true,
+                    Message = $"Created {_successCount} text notes",
+                    Response = results
+                };
+            }
+            catch (Exception ex)
+            {
+                Result = new AIResult<List<object>>
+                {
+                    Success = false,
+                    Message = $"Failed to create text notes: {ex.Message}",
+                    Response = new List<object>()
+                };
+            }
+            finally
+            {
+                _resetEvent.Set();
+            }
+        }
+
+        private HorizontalTextAlignment ParseAlignment(string alignment)
+        {
+            switch (alignment?.ToLower())
+            {
+                case "center": return HorizontalTextAlignment.Center;
+                case "right": return HorizontalTextAlignment.Right;
+                default: return HorizontalTextAlignment.Left;
+            }
+        }
+
+        public string GetName() => "Create Text Notes";
+    }
+
+    public class TextNoteData
+    {
+        public string Text { get; set; }
+        public JZPoint Position { get; set; }
+        public long ViewId { get; set; } = -1;
+        public long TextNoteTypeId { get; set; } = -1;
+        public string HorizontalAlignment { get; set; } = "Left";
+        public double Width { get; set; } = 0;
+    }
+}
