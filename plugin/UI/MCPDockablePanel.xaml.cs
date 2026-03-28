@@ -158,8 +158,8 @@ namespace revit_mcp_plugin.UI
                     AvatarLetter = "L";
                     AvatarBackground = UserBlue;
                     RoleLabelColor = UserBlue;
-                    TextColor = new SolidColorBrush(Color.FromRgb(232, 232, 232));
-                    RowBackground = new SolidColorBrush(Color.FromRgb(43, 43, 43));
+                    TextColor = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+                    RowBackground = new SolidColorBrush(Color.FromRgb(247, 245, 243));
                     FontFamily = new FontFamily("Segoe UI");
                     break;
                 case "tool":
@@ -167,8 +167,8 @@ namespace revit_mcp_plugin.UI
                     AvatarLetter = "⚡";
                     AvatarBackground = ToolGreen;
                     RoleLabelColor = ToolGreen;
-                    TextColor = ToolGreen;
-                    RowBackground = new SolidColorBrush(Color.FromRgb(35, 45, 35));
+                    TextColor = new SolidColorBrush(Color.FromRgb(46, 125, 50));
+                    RowBackground = new SolidColorBrush(Color.FromRgb(240, 247, 240));
                     FontFamily = new FontFamily("Consolas");
                     break;
                 default:
@@ -176,8 +176,8 @@ namespace revit_mcp_plugin.UI
                     AvatarLetter = "C";
                     AvatarBackground = ClaudeOrange;
                     RoleLabelColor = ClaudeOrange;
-                    TextColor = new SolidColorBrush(Color.FromRgb(210, 210, 210));
-                    RowBackground = new SolidColorBrush(Color.FromRgb(48, 48, 48));
+                    TextColor = new SolidColorBrush(Color.FromRgb(55, 55, 55));
+                    RowBackground = new SolidColorBrush(Color.FromRgb(239, 236, 232));
                     FontFamily = new FontFamily("Segoe UI");
                     break;
             }
