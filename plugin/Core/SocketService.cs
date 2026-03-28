@@ -250,13 +250,31 @@ namespace revit_mcp_plugin.Core
                 // 执行命令
                 // Execute command.
                 try
-                {                
+                {
+                    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                     object result = command.Execute(request.GetParamsObject(), request.Id);
+                    stopwatch.Stop();
+
+                    // Log to dockable panel
+                    try
+                    {
+                        UI.MCPDockablePanel.Instance?.LogCommand(
+                            request.Method, true, "Success", stopwatch.ElapsedMilliseconds);
+                    }
+                    catch { }
 
                     return CreateSuccessResponse(request.Id, result);
                 }
                 catch (Exception ex)
                 {
+                    // Log error to dockable panel
+                    try
+                    {
+                        UI.MCPDockablePanel.Instance?.LogCommand(
+                            request.Method, false, ex.Message, 0);
+                    }
+                    catch { }
+
                     return CreateErrorResponse(request.Id, JsonRPCErrorCodes.InternalError, ex.Message);
                 }
             }

@@ -2,6 +2,7 @@
 using Autodesk.Revit.UI;
 using System.Reflection;
 using System.Windows.Media.Imaging;
+using revit_mcp_plugin.UI;
 
 
 
@@ -11,6 +12,16 @@ namespace revit_mcp_plugin.Core
     {
         public Result OnStartup(UIControlledApplication application)
         {
+            // Register Dockable Panel
+            try
+            {
+                application.RegisterDockablePane(
+                    MCPDockablePaneProvider.PaneId,
+                    "MCP Server",
+                    new MCPDockablePaneProvider());
+            }
+            catch { /* Panel may already be registered */ }
+
             RibbonPanel mcpPanel = application.CreateRibbonPanel("Revit MCP Plugin");
 
             PushButtonData pushButtonData = new PushButtonData("ID_EXCMD_TOGGLE_REVIT_MCP", "Revit MCP\r\n Switch",
@@ -19,6 +30,13 @@ namespace revit_mcp_plugin.Core
             pushButtonData.Image = new BitmapImage(new Uri("/RevitMCPPlugin;component/Core/Ressources/icon-16.png", UriKind.RelativeOrAbsolute));
             pushButtonData.LargeImage = new BitmapImage(new Uri("/RevitMCPPlugin;component/Core/Ressources/icon-32.png", UriKind.RelativeOrAbsolute));
             mcpPanel.AddItem(pushButtonData);
+
+            PushButtonData panelButtonData = new PushButtonData("ID_EXCMD_TOGGLE_MCP_PANEL", "MCP\r\n Panel",
+                Assembly.GetExecutingAssembly().Location, "revit_mcp_plugin.Core.ToggleMCPPanel");
+            panelButtonData.ToolTip = "Show / Hide MCP monitoring panel";
+            panelButtonData.Image = new BitmapImage(new Uri("/RevitMCPPlugin;component/Core/Ressources/icon-16.png", UriKind.RelativeOrAbsolute));
+            panelButtonData.LargeImage = new BitmapImage(new Uri("/RevitMCPPlugin;component/Core/Ressources/icon-32.png", UriKind.RelativeOrAbsolute));
+            mcpPanel.AddItem(panelButtonData);
 
             PushButtonData mcp_settings_pushButtonData = new PushButtonData("ID_EXCMD_MCP_SETTINGS", "Settings",
                 Assembly.GetExecutingAssembly().Location, "revit_mcp_plugin.Core.Settings");
