@@ -38,7 +38,11 @@ namespace RevitMCPCommandSet.Services
 
                         try
                         {
+#if REVIT2024_OR_GREATER
                             var elementId = new ElementId(request.ElementId);
+#else
+                            var elementId = new ElementId((int)request.ElementId);
+#endif
                             var element = doc.GetElement(elementId);
                             if (element == null)
                             {
@@ -53,7 +57,11 @@ namespace RevitMCPCommandSet.Services
                             // Set created phase
                             if (request.CreatedPhaseId.HasValue)
                             {
+#if REVIT2024_OR_GREATER
                                 var createdPhaseElementId = new ElementId(request.CreatedPhaseId.Value);
+#else
+                                var createdPhaseElementId = new ElementId((int)request.CreatedPhaseId.Value);
+#endif
                                 if (!(doc.GetElement(createdPhaseElementId) is Phase))
                                 {
                                     result.Success = false;
@@ -78,7 +86,11 @@ namespace RevitMCPCommandSet.Services
                             // Set demolished phase
                             if (request.DemolishedPhaseId.HasValue)
                             {
+#if REVIT2024_OR_GREATER
                                 var demolishedPhaseElementId = new ElementId(request.DemolishedPhaseId.Value);
+#else
+                                var demolishedPhaseElementId = new ElementId((int)request.DemolishedPhaseId.Value);
+#endif
                                 if (!(doc.GetElement(demolishedPhaseElementId) is Phase))
                                 {
                                     result.Success = false;

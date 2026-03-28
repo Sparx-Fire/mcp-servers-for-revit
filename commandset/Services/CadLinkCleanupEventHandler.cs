@@ -72,7 +72,11 @@ namespace RevitMCPCommandSet.Services
 
                 cadItems.Add(new
                 {
+#if REVIT2024_OR_GREATER
                     id = import.Id.Value,
+#else
+                    id = import.Id.IntegerValue,
+#endif
                     name = import.Name,
                     isLinked,
                     category = import.Category?.Name ?? "CAD",
@@ -88,7 +92,11 @@ namespace RevitMCPCommandSet.Services
 
             var linkTypes = cadLinkTypes.Select(lt => new
             {
+#if REVIT2024_OR_GREATER
                 id = lt.Id.Value,
+#else
+                id = lt.Id.IntegerValue,
+#endif
                 name = lt.Name,
                 type = "CADLinkType"
             }).ToList();
@@ -157,7 +165,11 @@ namespace RevitMCPCommandSet.Services
 
         private ElementId ToElementId(long id)
         {
+#if REVIT2024_OR_GREATER
             return new ElementId(id);
+#else
+            return new ElementId((int)id);
+#endif
         }
 
         public string GetName() => "CAD Link Cleanup";

@@ -79,7 +79,11 @@ namespace RevitMCPCommandSet.Services
 
                 links.Add(new
                 {
+#if REVIT2024_OR_GREATER
                     linkTypeId = linkType.Id.Value,
+#else
+                    linkTypeId = linkType.Id.IntegerValue,
+#endif
                     name = linkType.Name,
                     path,
                     status,
@@ -87,7 +91,11 @@ namespace RevitMCPCommandSet.Services
                     instanceCount = instances.Count,
                     instances = instances.Select(i => new
                     {
+#if REVIT2024_OR_GREATER
                         id = i.Id.Value,
+#else
+                        id = i.Id.IntegerValue,
+#endif
                         name = i.Name
                     }).ToList()
                 });
@@ -141,7 +149,11 @@ namespace RevitMCPCommandSet.Services
 
         private ElementId ToElementId(long id)
         {
+#if REVIT2024_OR_GREATER
             return new ElementId(id);
+#else
+            return new ElementId((int)id);
+#endif
         }
 
         public string GetName() => "Manage Links";

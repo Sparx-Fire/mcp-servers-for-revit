@@ -55,7 +55,11 @@ namespace RevitMCPCommandSet.Services.DataExtraction
 
                     var roomData = new RoomDataModel
                     {
+#if REVIT2024_OR_GREATER
                         Id = room.Id.Value,
+#else
+                        Id = room.Id.IntegerValue,
+#endif
                         UniqueId = room.UniqueId,
                         Name = room.get_Parameter(BuiltInParameter.ROOM_NAME)?.AsString() ?? "",
                         Number = room.Number ?? "",

@@ -51,7 +51,11 @@ namespace RevitMCPCommandSet.Services
 
                     results.Add(new
                     {
+#if REVIT2024_OR_GREATER
                         id = mat.Id.Value,
+#else
+                        id = mat.Id.IntegerValue,
+#endif
                         name = mat.Name,
                         materialClass = mat.MaterialClass,
                         materialCategory = mat.MaterialCategory,

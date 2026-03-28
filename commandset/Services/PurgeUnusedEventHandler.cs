@@ -25,10 +25,15 @@ namespace RevitMCPCommandSet.Services
             {
                 var doc = app.ActiveUIDocument.Document;
 
+#if REVIT2024_OR_GREATER
                 // Revit 2024+ has GetUnusedElements
                 var allIds = new HashSet<ElementId>();
                 var purgeableIds = doc.GetUnusedElements(allIds);
                 var purgeableList = purgeableIds.ToList();
+#else
+                // For older versions, use PerformanceAdviser to find purgeable elements
+                var purgeableList = GetPurgeableElementsFallback(doc);
+#endif
 
                 // Categorize purgeable elements
                 var categories = new Dictionary<string, List<object>>();
@@ -47,7 +52,11 @@ namespace RevitMCPCommandSet.Services
 
                     categories[catName].Add(new
                     {
+#if REVIT2024_OR_GREATER
                         id = id.Value,
+#else
+                        id = id.IntegerValue,
+#endif
                         name = elem.Name ?? "(unnamed)",
                         typeName = elem.GetType().Name
                     });
@@ -116,6 +125,7 @@ namespace RevitMCPCommandSet.Services
             }
         }
 
+#if !REVIT2024_OR_GREATER
         private List<ElementId> GetPurgeableElementsFallback(Document doc)
         {
             var purgeableIds = new List<ElementId>();
@@ -142,6 +152,7 @@ namespace RevitMCPCommandSet.Services
 
             return purgeableIds.Distinct().ToList();
         }
+#endif
 
         public string GetName() => "Purge Unused";
     }

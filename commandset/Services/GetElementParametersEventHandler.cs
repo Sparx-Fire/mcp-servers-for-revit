@@ -28,13 +28,21 @@ namespace RevitMCPCommandSet.Services
 
                 foreach (var id in ElementIds)
                 {
+#if REVIT2024_OR_GREATER
                     var elementId = new ElementId(id);
+#else
+                    var elementId = new ElementId((int)id);
+#endif
                     var element = doc.GetElement(elementId);
                     if (element == null) continue;
 
                     var result = new ElementParametersResult
                     {
+#if REVIT2024_OR_GREATER
                         ElementId = element.Id.Value,
+#else
+                        ElementId = element.Id.IntegerValue,
+#endif
                         ElementName = element.Name,
                         Category = element.Category?.Name,
                     };
@@ -98,7 +106,11 @@ namespace RevitMCPCommandSet.Services
                 IsShared = param.IsShared,
                 HasValue = param.HasValue,
                 StorageType = param.StorageType.ToString(),
+#if REVIT2022_OR_GREATER
                 GroupName = param.Definition?.GetGroupTypeId()?.TypeId ?? ""
+#else
+                GroupName = ""
+#endif
             };
 
             if (param.HasValue)
@@ -115,7 +127,11 @@ namespace RevitMCPCommandSet.Services
                         info.Value = param.AsDouble();
                         break;
                     case StorageType.ElementId:
+#if REVIT2024_OR_GREATER
                         info.Value = param.AsElementId().Value;
+#else
+                        info.Value = param.AsElementId().IntegerValue;
+#endif
                         break;
                     default:
                         info.Value = param.AsValueString();

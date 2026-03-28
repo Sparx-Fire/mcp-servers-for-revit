@@ -66,6 +66,7 @@ namespace RevitMCPCommandSet.Services
 
         private void ExportPdf(Document doc)
         {
+#if REVIT2022_OR_GREATER
             var viewIds = GetViewOrSheetIds(doc);
             if (viewIds.Count == 0)
                 throw new Exception("No sheets/views to export");
@@ -101,6 +102,9 @@ namespace RevitMCPCommandSet.Services
                     files = exportedFiles.Select(f => System.IO.Path.GetFileName(f)).ToList()
                 }
             };
+#else
+            throw new Exception("PDF export requires Revit 2022 or later");
+#endif
         }
 
         private void ExportDwg(Document doc)
@@ -189,7 +193,11 @@ namespace RevitMCPCommandSet.Services
 
         private ElementId ToElementId(long id)
         {
+#if REVIT2024_OR_GREATER
             return new ElementId(id);
+#else
+            return new ElementId((int)id);
+#endif
         }
 
         public string GetName() => "Batch Export";

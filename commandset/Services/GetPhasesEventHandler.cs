@@ -31,7 +31,11 @@ namespace RevitMCPCommandSet.Services
                 {
                     phases.Add(new
                     {
+#if REVIT2024_OR_GREATER
                         id = phase.Id.Value,
+#else
+                        id = phase.Id.IntegerValue,
+#endif
                         name = phase.Name
                     });
                 }
@@ -48,7 +52,11 @@ namespace RevitMCPCommandSet.Services
                     {
                         phaseFilters.Add(new
                         {
+#if REVIT2024_OR_GREATER
                             id = phaseFilter.Id.Value,
+#else
+                            id = phaseFilter.Id.IntegerValue,
+#endif
                             name = phaseFilter.Name
                         });
                     }

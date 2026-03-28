@@ -106,7 +106,11 @@ namespace RevitMCPCommandSet.Services
                         Grid grid = Grid.Create(doc, gridLine);
                         grid.Name = uniqueLabel;
 
+#if REVIT2024_OR_GREATER
                         long gridId = grid.Id.Value;
+#else
+                        long gridId = grid.Id.IntegerValue;
+#endif
 
                         createdGrids.Add(new GridCreationResult
                         {
@@ -158,7 +162,11 @@ namespace RevitMCPCommandSet.Services
                         Grid grid = Grid.Create(doc, gridLine);
                         grid.Name = uniqueLabel;
 
+#if REVIT2024_OR_GREATER
                         long gridId = grid.Id.Value;
+#else
+                        long gridId = grid.Id.IntegerValue;
+#endif
 
                         createdGrids.Add(new GridCreationResult
                         {

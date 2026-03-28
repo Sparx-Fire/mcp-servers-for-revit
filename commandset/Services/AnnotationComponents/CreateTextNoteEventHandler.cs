@@ -38,7 +38,11 @@ namespace RevitMCPCommandSet.Services.AnnotationComponents
                             View view;
                             if (data.ViewId > 0)
                             {
+#if REVIT2024_OR_GREATER
                                 view = doc.GetElement(new ElementId(data.ViewId)) as View;
+#else
+                                view = doc.GetElement(new ElementId((int)data.ViewId)) as View;
+#endif
                                 if (view == null)
                                     throw new ArgumentException($"View with ID {data.ViewId} not found");
                             }
@@ -51,7 +55,11 @@ namespace RevitMCPCommandSet.Services.AnnotationComponents
                             ElementId typeId;
                             if (data.TextNoteTypeId > 0)
                             {
+#if REVIT2024_OR_GREATER
                                 typeId = new ElementId(data.TextNoteTypeId);
+#else
+                                typeId = new ElementId((int)data.TextNoteTypeId);
+#endif
                             }
                             else
                             {
@@ -83,7 +91,11 @@ namespace RevitMCPCommandSet.Services.AnnotationComponents
                             _successCount++;
                             results.Add(new
                             {
+#if REVIT2024_OR_GREATER
                                 textNoteId = textNote.Id.Value,
+#else
+                                textNoteId = textNote.Id.IntegerValue,
+#endif
                                 text = data.Text,
                                 success = true
                             });
