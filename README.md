@@ -34,15 +34,15 @@ The **MCP Server** (TypeScript) translates tool calls from AI clients into WebSo
 
 ## Quick Start (Using a Release)
 
-1. Download the ZIP for your Revit version from the [Releases](https://github.com/mcp-servers-for-revit/mcp-servers-for-revit/releases) page (e.g., `mcp-servers-for-revit-v1.0.0-Revit2025.zip`)
+1. Download the ZIP from the [Releases](https://github.com/mcp-servers-for-revit/mcp-servers-for-revit/releases) page (e.g., `mcp-servers-for-revit-v1.0.0-Revit2026.zip`)
 
 2. Extract the ZIP and copy the contents to your Revit addins folder:
    ```
-   %AppData%\Autodesk\Revit\Addins\<your Revit version>\
+   %AppData%\Autodesk\Revit\Addins\2026\
    ```
    After copying you should have:
    ```
-   Addins/2025/
+   Addins/2026/
    ├── mcp-servers-for-revit.addin
    └── revit_mcp_plugin/
        ├── revit-mcp-plugin.dll
@@ -50,7 +50,7 @@ The **MCP Server** (TypeScript) translates tool calls from AI clients into WebSo
        └── Commands/
            └── RevitMCPCommandSet/
                ├── command.json
-               └── 2025/
+               └── 2026/
                    ├── RevitMCPCommandSet.dll
                    └── ...
    ```
@@ -143,19 +143,15 @@ The test project uses [Nice3point.TUnit.Revit](https://github.com/Nice3point/Rev
 ### Prerequisites
 
 - **.NET 10 SDK** — required by Nice3point.Revit.Sdk 6.1.0. Install via `winget install Microsoft.DotNet.SDK.10`
-- **Autodesk Revit 2026** (or 2025) — must be installed and licensed on your machine
+- **Autodesk Revit 2026** — must be installed and licensed on your machine
 
 ### Running Tests
 
-1. Open Revit 2026 (or 2025) and wait for it to fully load
+1. Open Revit 2026 and wait for it to fully load
 2. Run the tests from the command line:
 
 ```bash
-# For Revit 2026
 dotnet test -c Debug.R26 -r win-x64 tests/commandset
-
-# For Revit 2025
-dotnet test -c Debug.R25 -r win-x64 tests/commandset
 ```
 
 > **Note:** The `-r win-x64` flag is required on ARM64 machines because the Revit API assemblies are x64-only.
