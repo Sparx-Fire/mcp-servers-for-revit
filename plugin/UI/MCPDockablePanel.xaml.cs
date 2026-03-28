@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,14 +16,26 @@ namespace revit_mcp_plugin.UI
         private readonly DispatcherTimer _statusTimer;
         private ClaudeRevitClient _client;
         private bool _isProcessing;
+        private bool _planningMode;
 
         public static MCPDockablePanel Instance => _instance;
+
+        private static readonly List<ModelOption> AvailableModels = new List<ModelOption>
+        {
+            new ModelOption("Haiku 3.5", "claude-haiku-4-5-20251001"),
+            new ModelOption("Sonnet 4", "claude-sonnet-4-20250514"),
+            new ModelOption("Opus 4", "claude-opus-4-20250514"),
+        };
 
         public MCPDockablePanel()
         {
             InitializeComponent();
             _instance = this;
             ChatMessages.ItemsSource = _messages;
+
+            // Populate model selector
+            ModelSelector.ItemsSource = AvailableModels;
+            ModelSelector.SelectedIndex = 1; // Sonnet 4 default
 
             _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
             _statusTimer.Tick += (s, e) => UpdateStatus();
@@ -80,7 +93,7 @@ namespace revit_mcp_plugin.UI
             _isProcessing = true;
             SendButton.IsEnabled = false;
             TypingIndicator.Visibility = Visibility.Visible;
-            TypingText.Text = "Claude sta pensando...";
+            TypingText.Text = _planningMode ? "Claude sta pianificando..." : "Claude sta pensando...";
 
             try
             {
@@ -91,7 +104,13 @@ namespace revit_mcp_plugin.UI
                     return;
                 }
 
-                if (_client == null) _client = new ClaudeRevitClient();
+                if (_client == null)
+                {
+                    _client = new ClaudeRevitClient();
+                    if (ModelSelector.SelectedItem is ModelOption selected)
+                        _client.Model = selected.ModelId;
+                    _client.ThinkingEnabled = _planningMode;
+                }
                 string response = await _client.SendMessage(input);
                 AddMessage("assistant", response);
             }
@@ -128,11 +147,61 @@ namespace revit_mcp_plugin.UI
 
         public void LogCommand(string commandName, bool success, string message, double durationMs) { }
 
+        private void ModelSelector_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (ModelSelector.SelectedItem is ModelOption selected && _client != null)
+            {
+                _client.Model = selected.ModelId;
+            }
+        }
+
+        private void PlanningToggle_Click(object sender, MouseButtonEventArgs e)
+        {
+            _planningMode = !_planningMode;
+
+            if (_planningMode)
+            {
+                PlanningToggle.Background = new SolidColorBrush(Color.FromRgb(217, 119, 87));
+                PlanningToggle.BorderBrush = new SolidColorBrush(Color.FromRgb(217, 119, 87));
+                PlanningLabel.Foreground = new SolidColorBrush(Colors.White);
+            }
+            else
+            {
+                PlanningToggle.Background = new SolidColorBrush(Color.FromRgb(245, 244, 242));
+                PlanningToggle.BorderBrush = new SolidColorBrush(Color.FromRgb(224, 221, 217));
+                PlanningLabel.Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153));
+            }
+
+            if (_client != null)
+                _client.ThinkingEnabled = _planningMode;
+        }
+
+        public void OnThinkingReceived(string thinkingText)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _messages.Add(new ChatMessage("thinking", thinkingText));
+                ChatScrollViewer.ScrollToEnd();
+            }));
+        }
+
         private void ClearChat_Click(object sender, MouseButtonEventArgs e)
         {
             _messages.Clear();
             _client?.ClearHistory();
             AddMessage("assistant", "Chat azzerata. Come posso aiutarti?");
+        }
+    }
+
+    public class ModelOption
+    {
+        public string DisplayName { get; }
+        public string ModelId { get; }
+
+        public ModelOption(string displayName, string modelId)
+        {
+            DisplayName = displayName;
+            ModelId = modelId;
         }
     }
 
@@ -151,6 +220,7 @@ namespace revit_mcp_plugin.UI
         private static readonly SolidColorBrush ClaudeOrange = new SolidColorBrush(Color.FromRgb(217, 119, 87));
         private static readonly SolidColorBrush UserBlue = new SolidColorBrush(Color.FromRgb(88, 130, 207));
         private static readonly SolidColorBrush ToolGreen = new SolidColorBrush(Color.FromRgb(76, 175, 80));
+        private static readonly SolidColorBrush ThinkingPurple = new SolidColorBrush(Color.FromRgb(147, 112, 219));
 
         public ChatMessage(string role, string text)
         {
@@ -166,6 +236,15 @@ namespace revit_mcp_plugin.UI
                     RoleLabelColor = new SolidColorBrush(Color.FromRgb(26, 26, 26));
                     TextColor = new SolidColorBrush(Color.FromRgb(26, 26, 26));
                     RowBackground = new SolidColorBrush(Colors.White);
+                    FontFamily = new FontFamily("Segoe UI");
+                    break;
+                case "thinking":
+                    RoleLabel = "Planning";
+                    AvatarLetter = "💡";
+                    AvatarBackground = ThinkingPurple;
+                    RoleLabelColor = ThinkingPurple;
+                    TextColor = new SolidColorBrush(Color.FromRgb(120, 100, 160));
+                    RowBackground = new SolidColorBrush(Color.FromRgb(248, 246, 252));
                     FontFamily = new FontFamily("Segoe UI");
                     break;
                 case "tool":

@@ -16,7 +16,7 @@ namespace revit_mcp_plugin.UI
         private readonly List<JObject> _conversationHistory = new List<JObject>();
         private string _apiKey;
         private const string API_URL = "https://api.anthropic.com/v1/messages";
-        private const string MODEL = "claude-sonnet-4-20250514";
+        private string _model = "claude-sonnet-4-20250514";
         private const int MCP_PORT = 8080;
 
         private const string SYSTEM_PROMPT = @"Sei Claude, un assistente AI integrato direttamente in Autodesk Revit. Hai accesso a tool che eseguono comandi sul modello Revit attivo in tempo reale.
@@ -27,6 +27,27 @@ Rispondi in italiano, sii conciso. Dopo aver eseguito un tool, descrivi brevemen
 
 Coordinate: tutti i valori sono in millimetri (mm).
 Categorie comuni: OST_Walls, OST_Floors, OST_Doors, OST_Windows, OST_StructuralColumns, OST_StructuralFraming, OST_Rooms.";
+
+        private bool _thinkingEnabled;
+        private int _thinkingBudget = 10000;
+
+        public string Model
+        {
+            get => _model;
+            set => _model = value;
+        }
+
+        public bool ThinkingEnabled
+        {
+            get => _thinkingEnabled;
+            set => _thinkingEnabled = value;
+        }
+
+        public int ThinkingBudget
+        {
+            get => _thinkingBudget;
+            set => _thinkingBudget = value;
+        }
 
         public ClaudeRevitClient()
         {
@@ -90,17 +111,25 @@ Categorie comuni: OST_Walls, OST_Floors, OST_Doors, OST_Windows, OST_StructuralC
                 // Check stop reason
                 string stopReason = response["stop_reason"]?.ToString() ?? "end_turn";
 
-                // Collect text and tool_use blocks
+                // Collect thinking, text and tool_use blocks
+                var thinkingParts = new List<string>();
                 var textParts = new List<string>();
                 var toolUses = new List<JObject>();
 
                 foreach (var block in content)
                 {
-                    if (block["type"]?.ToString() == "text")
+                    string blockType = block["type"]?.ToString();
+                    if (blockType == "thinking")
+                        thinkingParts.Add(block["thinking"]?.ToString() ?? "");
+                    else if (blockType == "text")
                         textParts.Add(block["text"]?.ToString() ?? "");
-                    else if (block["type"]?.ToString() == "tool_use")
+                    else if (blockType == "tool_use")
                         toolUses.Add((JObject)block);
                 }
+
+                // Notify panel about thinking content
+                if (thinkingParts.Count > 0)
+                    MCPDockablePanel.Instance?.OnThinkingReceived(string.Join("\n", thinkingParts));
 
                 // Add assistant message to history
                 _conversationHistory.Add(new JObject { ["role"] = "assistant", ["content"] = content });
@@ -143,12 +172,21 @@ Categorie comuni: OST_Walls, OST_Floors, OST_Doors, OST_Windows, OST_StructuralC
         {
             var requestBody = new JObject
             {
-                ["model"] = MODEL,
-                ["max_tokens"] = 2048,
+                ["model"] = _model,
+                ["max_tokens"] = _thinkingEnabled ? 16000 : 2048,
                 ["system"] = SYSTEM_PROMPT,
                 ["tools"] = GetToolDefinitions(),
                 ["messages"] = JArray.FromObject(_conversationHistory)
             };
+
+            if (_thinkingEnabled)
+            {
+                requestBody["thinking"] = new JObject
+                {
+                    ["type"] = "enabled",
+                    ["budget_tokens"] = _thinkingBudget
+                };
+            }
 
             var request = (HttpWebRequest)WebRequest.Create(API_URL);
             request.Method = "POST";

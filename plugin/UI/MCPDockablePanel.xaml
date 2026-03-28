@@ -115,16 +115,39 @@
                     <!-- Bottom bar with send button -->
                     <Grid Grid.Row="1" Margin="8,0,8,6">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Model label -->
-                        <TextBlock Grid.Column="0" Text="Sonnet 4" Foreground="#AAA" FontSize="11"
-                                   VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        <!-- Model selector -->
+                        <ComboBox x:Name="ModelSelector" Grid.Column="0"
+                                  FontSize="11" Foreground="#888" Background="Transparent"
+                                  BorderThickness="0" VerticalAlignment="Center" Margin="4,0,0,0"
+                                  Cursor="Hand" SelectionChanged="ModelSelector_Changed">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" FontSize="11"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <!-- Planning mode toggle -->
+                        <Border x:Name="PlanningToggle" Grid.Column="1"
+                                CornerRadius="10" Padding="8,3" Margin="6,0,0,0"
+                                Background="#F5F4F2" BorderBrush="#E0DDD9" BorderThickness="1"
+                                Cursor="Hand" MouseLeftButtonDown="PlanningToggle_Click">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock x:Name="PlanningIcon" Text="💡" FontSize="10" Margin="0,0,4,0"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock x:Name="PlanningLabel" Text="Planning" FontSize="10"
+                                           Foreground="#999" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Send button -->
-                        <Button x:Name="SendButton" Grid.Column="1" Click="Send_Click"
+                        <Button x:Name="SendButton" Grid.Column="3" Click="Send_Click"
                                 Background="Transparent" BorderThickness="0"
                                 Padding="0" Cursor="Hand" VerticalAlignment="Center">
                             <Border Width="28" Height="28" CornerRadius="14" Background="#D97757">
