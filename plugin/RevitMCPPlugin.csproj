@@ -50,6 +50,10 @@
         <Resource Include="Core\Ressources\icon-32.png"/>
     </ItemGroup>
     <ItemGroup>
+        <Resource Include="Core\Ressources\panel-16.png"/>
+        <Resource Include="Core\Ressources\panel-32.png"/>
+    </ItemGroup>
+    <ItemGroup>
         <Resource Include="Core\Ressources\settings-16.png"/>
         <Resource Include="Core\Ressources\settings-32.png"/>
     </ItemGroup>
