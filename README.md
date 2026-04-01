@@ -87,6 +87,36 @@ Restart Claude Desktop. When you see the hammer icon, the MCP server is connecte
 
 ![Claude Desktop connection](./assets/claude.png)
 
+### Multiple Revit Instances
+
+The plugin auto-assigns a port based on the Revit version (`8020 + year % 100`), so Revit 2024 uses port 8044, 2025 uses 8045, etc. To connect the MCP server to a specific Revit version, pass `--revit-version`:
+
+**Claude Code**
+
+```bash
+claude mcp add revit-2024 -- cmd /c npx -y mcp-server-for-revit --revit-version 2024
+claude mcp add revit-2025 -- cmd /c npx -y mcp-server-for-revit --revit-version 2025
+```
+
+**Claude Desktop**
+
+```json
+{
+    "mcpServers": {
+        "revit-2024": {
+            "command": "cmd",
+            "args": ["/c", "npx", "-y", "mcp-server-for-revit", "--revit-version", "2024"]
+        },
+        "revit-2025": {
+            "command": "cmd",
+            "args": ["/c", "npx", "-y", "mcp-server-for-revit", "--revit-version", "2025"]
+        }
+    }
+}
+```
+
+You can also use `--port <number>` for a specific port, or set the `REVIT_MCP_PORT` environment variable. Without any flag, the server defaults to port 8080 for backward compatibility.
+
 ## Revit Plugin Setup
 
 If using a release ZIP, the plugin is already included. For manual installation:

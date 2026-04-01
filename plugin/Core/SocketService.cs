@@ -78,13 +78,23 @@ namespace revit_mcp_plugin.Core
             configManager.LoadConfiguration();
             
 
-            //// 从配置中读取服务端口
-            //// Read the service port from the configuration.
-            //if (configManager.Config.Settings.Port > 0)
-            //{
-            //    _port = configManager.Config.Settings.Port;
-            //}
-            _port = 8080; // 固定端口号 - Hard-wired port number.
+            // Derive port from Revit version: 8020 + (year % 100)
+            // e.g. Revit 2024 → 8044, 2025 → 8045, 2026 → 8046
+            if (int.TryParse(currentVersion, out int versionYear))
+            {
+                _port = 8020 + (versionYear % 100);
+            }
+            else
+            {
+                _port = 8080; // fallback if version can't be parsed
+            }
+
+            // Allow config file to override the version-derived port
+            if (configManager.Config.Settings.Port > 0
+                && configManager.Config.Settings.Port != 8080)
+            {
+                _port = configManager.Config.Settings.Port;
+            }
 
             // 加载命令
             // Load command.

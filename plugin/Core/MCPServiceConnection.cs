@@ -19,13 +19,13 @@ namespace revit_mcp_plugin.Core
                 if (service.IsRunning)
                 {
                     service.Stop();
-                    TaskDialog.Show("revitMCP", "Close Server");
+                    TaskDialog.Show("revitMCP", $"Server stopped (was port {service.Port})");
                 }
                 else
                 {
                     service.Initialize(commandData.Application);
                     service.Start();
-                    TaskDialog.Show("revitMCP", "Open Server");
+                    TaskDialog.Show("revitMCP", $"Server started on port {service.Port}");
                 }
 
                 return Result.Succeeded;

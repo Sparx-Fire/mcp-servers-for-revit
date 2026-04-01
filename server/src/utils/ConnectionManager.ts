@@ -1,5 +1,12 @@
 import { RevitClientConnection } from "./SocketClient.js";
 
+// Configurable port for connecting to Revit plugin
+let revitPort = 8080;
+
+export function setRevitPort(port: number) {
+  revitPort = port;
+}
+
 // Mutex to serialize all Revit connections - prevents race conditions
 // when multiple requests are made in parallel
 let connectionMutex: Promise<void> = Promise.resolve();
@@ -20,7 +27,7 @@ export async function withRevitConnection<T>(
   });
   await previousMutex;
 
-  const revitClient = new RevitClientConnection("localhost", 8080);
+  const revitClient = new RevitClientConnection("localhost", revitPort);
 
   try {
     // 连接到Revit客户端
