@@ -46,7 +46,7 @@ The **MCP Server** (TypeScript) translates tool calls from AI clients into WebSo
    ├── mcp-servers-for-revit.addin
    └── revit_mcp_plugin/
        ├── RevitMCPPlugin.dll
-       ├── RevitMCPSDK.dll
+       ├── ...
        └── Commands/
            └── RevitMCPCommandSet/
                ├── command.json
