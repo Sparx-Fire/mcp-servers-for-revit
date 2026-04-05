@@ -45,8 +45,8 @@ The **MCP Server** (TypeScript) translates tool calls from AI clients into WebSo
    Addins/2025/
    ├── mcp-servers-for-revit.addin
    └── revit_mcp_plugin/
-       ├── revit-mcp-plugin.dll
-       ├── ...
+       ├── RevitMCPPlugin.dll
+       ├── RevitMCPSDK.dll
        └── Commands/
            └── RevitMCPCommandSet/
                ├── command.json
@@ -55,15 +55,19 @@ The **MCP Server** (TypeScript) translates tool calls from AI clients into WebSo
                    └── ...
    ```
 
-3. Configure the MCP server in your AI client (see below)
+3. Configure the MCP server in your AI client (see [MCP Server Setup](#mcp-server-setup))
 
-4. Start Revit - the plugin loads automatically
+4. Start Revit — if prompted about an unknown add-in, click **Always Load**
+
+5. In Revit, click the **Settings** button on the mcp-servers-for-revit ribbon tab, enable the commands you want to use, and click **Save**
 
 ## MCP Server Setup
 
 The MCP server is published as an npm package and can be run directly with `npx`.
 
 **Claude Code**
+
+Run this in a **terminal** (not inside Claude Code):
 
 ```bash
 claude mcp add mcp-server-for-revit -- cmd /c npx -y mcp-server-for-revit
