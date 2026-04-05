@@ -7,6 +7,9 @@
     "bin": {
         "mcp-server-for-revit": "./build/index.js"
     },
+    "engines": {
+        "node": ">=20.0.0"
+    },
     "scripts": {
         "clean": "rimraf build",
         "prebuild": "npm run clean",
