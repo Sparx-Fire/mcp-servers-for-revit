@@ -6,7 +6,7 @@
         <UseWindowsForms>true</UseWindowsForms>
         <UseWPF>true</UseWPF>
         <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
-        <Configurations>Debug R20;Debug R21;Debug R22;Debug R24;Debug R25;Debug R26;Release R20;Release R21;Release R22;Release R23;Release R24;Release R25;Release R26;Debug R23</Configurations>
+        <Configurations>Debug R20;Debug R21;Debug R22;Debug R24;Debug R25;Debug R26;Debug R27;Release R20;Release R21;Release R22;Release R23;Release R24;Release R25;Release R26;Release R27;Debug R23</Configurations>
         <PlatformTarget>x64</PlatformTarget>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         
@@ -49,6 +49,12 @@
         <OutputPath>bin\$(Configuration.Split(' ')[0])\$(RevitVersion)\</OutputPath>
         <EnableDynamicLoading>true</EnableDynamicLoading>
     </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R27'))">
+        <RevitVersion>2027</RevitVersion>
+        <TargetFramework>net10.0-windows7.0</TargetFramework>
+        <OutputPath>bin\$(Configuration.Split(' ')[0])\$(RevitVersion)\</OutputPath>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+    </PropertyGroup>
     <PropertyGroup>
         <StartAction>Program</StartAction>
         <StartProgram>C:\Program Files\Autodesk\Revit $(RevitVersion)\Revit.exe</StartProgram>
@@ -58,7 +64,7 @@
         <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
         <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*"/>
         <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*"/>
-        <PackageReference Include="RevitMCPSDK" Version="$(RevitVersion).*"/>
+        <PackageReference Include="RevitMCPSDK" Version="$(RevitVersion).*" Condition="!$(Configuration.Contains('R27'))"/>
         <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0"/>
     </ItemGroup>
     <ItemGroup>
@@ -71,6 +77,12 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    </ItemGroup>
+    <ItemGroup Condition="$(Configuration.Contains('R27'))">
+        <Reference Include="RevitMCPSDK">
+            <HintPath>$(MSBuildThisFileDirectory)..\..\RevitMCPSDK\RevitMCPSDK\bin\Release R27\net10.0-windows7.0\RevitMCPSDK.dll</HintPath>
+            <Private>true</Private>
+        </Reference>
     </ItemGroup>
     <ItemGroup>
         <None Update="mcp-servers-for-revit.addin">
