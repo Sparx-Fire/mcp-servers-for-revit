@@ -65,7 +65,7 @@ export function registerAIElementFilterTool(server: McpServer) {
           maxElements: z
           .number()
           .optional()
-          .describe("The maximum number of elements to find in a single tool invocation. Default is 50. Values exceeding 50 are not recommended for performance reasons."),
+          .describe("The maximum number of elements to find in a single tool invocation. Defaults to 100000 so real-world queries are not silently truncated. Pass a smaller value only when you want a sample. When truncation occurs, the response Message states the full matching count, so the caller can detect it."),
       })
         .describe("Configuration parameters for the Revit element filter tool. These settings determine which elements will be selected from the Revit project based on various filtering criteria. Multiple filters can be combined to achieve precise element selection. All spatial coordinates should be provided in millimeters."),
     },

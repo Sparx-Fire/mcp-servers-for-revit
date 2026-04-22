@@ -124,7 +124,10 @@ namespace RevitMCPCommandSet.Services
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("Error", "获取族类型失败: " + ex.Message);
+                // TaskDialog removed — it blocked Revit UI on errors.
+                // Error surfaces as an empty ResultFamilyTypes list; command
+                // wrapper should translate that to the JSON response.
+                System.Diagnostics.Trace.WriteLine($"get_available_family_types failed: {ex.Message}");
             }
             finally
             {

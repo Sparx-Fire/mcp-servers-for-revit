@@ -6,66 +6,102 @@ namespace RevitMCPCommandSet.Services
 {
     public class DeleteElementEventHandler : IExternalEventHandler, IWaitableExternalEventHandler
     {
-        // 执行结果
+        // Operation outcome
         public bool IsSuccess { get; private set; }
 
-        // 成功删除的元素数量
+        // Total number of elements Revit deleted — includes both the
+        // explicitly requested elements AND any elements removed as a
+        // cascade (doors hosted on a deleted wall, tags on deleted
+        // elements, etc.). This is doc.Delete()'s native return value.
         public int DeletedCount { get; private set; }
-        // 状态同步对象
+
+        // The elements the caller explicitly asked to delete AND that
+        // existed at the time of the call. DeletedCount - DirectDeletedCount
+        // is the cascade count.
+        public int DirectDeletedCount { get; private set; }
+
+        // Cascade-deleted elements (dependencies that Revit removed
+        // because their host was deleted). Exposed separately so the
+        // caller can distinguish "14 as requested, 8 cascades" from
+        // "22 as requested." Previously these were indistinguishable.
+        public int CascadeDeletedCount { get; private set; }
+
+        // Input IDs that could not be parsed or did not correspond to
+        // an existing element. Reported to the caller so they know
+        // which requested deletions were skipped.
+        public List<string> InvalidIds { get; private set; } = new List<string>();
+
+        // Error message if IsSuccess is false. Surfaced to the caller
+        // instead of shown as a blocking Revit TaskDialog (previous
+        // behavior wedged the UI).
+        public string ErrorMessage { get; private set; }
+
+        // State-synchronization
         public bool TaskCompleted { get; private set; }
         private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
-        // 要删除的元素ID数组
+
+        // Element IDs to delete (input)
         public string[] ElementIds { get; set; }
-        // 实现IWaitableExternalEventHandler接口
+
         public bool WaitForCompletion(int timeoutMilliseconds = 10000)
         {
             _resetEvent.Reset();
-        return _resetEvent.WaitOne(timeoutMilliseconds);
+            return _resetEvent.WaitOne(timeoutMilliseconds);
         }
+
         public void Execute(UIApplication app)
         {
             try
             {
                 var doc = app.ActiveUIDocument.Document;
                 DeletedCount = 0;
+                DirectDeletedCount = 0;
+                CascadeDeletedCount = 0;
+                InvalidIds.Clear();
+
                 if (ElementIds == null || ElementIds.Length == 0)
                 {
                     IsSuccess = false;
+                    ErrorMessage = "No element IDs provided.";
                     return;
                 }
-                // 创建待删除元素ID集合
+
+                // Build the list of existing elements to delete.
                 List<ElementId> elementIdsToDelete = new List<ElementId>();
-                List<string> invalidIds = new List<string>();
                 foreach (var idStr in ElementIds)
                 {
                     if (int.TryParse(idStr, out int elementIdValue))
                     {
                         var elementId = new ElementId(elementIdValue);
-                        // 检查元素是否存在
                         if (doc.GetElement(elementId) != null)
                         {
                             elementIdsToDelete.Add(elementId);
                         }
+                        else
+                        {
+                            InvalidIds.Add(idStr);
+                        }
                     }
                     else
                     {
-                        invalidIds.Add(idStr);
+                        InvalidIds.Add(idStr);
                     }
                 }
-                if (invalidIds.Count > 0)
-                {
-                    TaskDialog.Show("警告", $"以下ID无效或元素不存在：{string.Join(", ", invalidIds)}");
-                }
-                // 如果有可删除的元素，则执行删除
+
                 if (elementIdsToDelete.Count > 0)
                 {
+                    DirectDeletedCount = elementIdsToDelete.Count;
+
                     using (var transaction = new Transaction(doc, "Delete Elements"))
                     {
                         transaction.Start();
 
-                        // 批量删除元素
+                        // doc.Delete returns ALL elements removed, including
+                        // cascade deletions. Subtract DirectDeletedCount to
+                        // isolate the cascade count.
                         ICollection<ElementId> deletedIds = doc.Delete(elementIdsToDelete);
                         DeletedCount = deletedIds.Count;
+                        CascadeDeletedCount = Math.Max(0, DeletedCount - DirectDeletedCount);
 
                         transaction.Commit();
                     }
@@ -73,14 +109,20 @@ namespace RevitMCPCommandSet.Services
                 }
                 else
                 {
-                    TaskDialog.Show("错误", "没有有效的元素可以删除");
+                    // No valid targets. Caller sees IsSuccess=false +
+                    // ErrorMessage + InvalidIds — no blocking dialog.
                     IsSuccess = false;
+                    ErrorMessage = InvalidIds.Count > 0
+                        ? $"No valid elements to delete. Invalid or missing IDs: {string.Join(", ", InvalidIds)}"
+                        : "No valid elements to delete.";
                 }
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("错误", "删除元素失败: " + ex.Message);
+                // Previous behavior: TaskDialog.Show blocked the UI thread.
+                // Now: return the error through the result object.
                 IsSuccess = false;
+                ErrorMessage = $"Delete failed: {ex.Message}";
             }
             finally
             {
@@ -88,9 +130,10 @@ namespace RevitMCPCommandSet.Services
                 _resetEvent.Set();
             }
         }
+
         public string GetName()
         {
-            return "删除元素";
+            return "Delete Elements";
         }
     }
 }

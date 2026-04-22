@@ -60,7 +60,11 @@ namespace RevitMCPCommandSet.Services
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("Error", "获取选中元素失败: " + ex.Message);
+                // TaskDialog removed — it blocked Revit UI on errors.
+                // On failure, we return an empty selection rather than
+                // wedge the UI. The command wrapping this handler should
+                // inspect the result length to detect "no selection" vs error.
+                System.Diagnostics.Trace.WriteLine($"get_selected_elements failed: {ex.Message}");
                 ResultElements = new List<Models.Common.ElementInfo>();
             }
             finally
@@ -72,7 +76,7 @@ namespace RevitMCPCommandSet.Services
 
         public string GetName()
         {
-            return "获取选中元素";
+            return "Get Selected Elements";
         }
     }
 }

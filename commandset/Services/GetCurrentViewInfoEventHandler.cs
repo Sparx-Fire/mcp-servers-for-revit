@@ -45,7 +45,8 @@ namespace RevitMCPCommandSet.Services
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("error", "获取信息失败");
+                // TaskDialog removed — it blocked Revit UI on errors.
+                System.Diagnostics.Trace.WriteLine($"get_current_view_info failed: {ex.Message}");
             }
             finally
             {
@@ -56,7 +57,7 @@ namespace RevitMCPCommandSet.Services
 
         public string GetName()
         {
-            return "获取当前视图信息";
+            return "Get Current View Info";
         }
     }
 }

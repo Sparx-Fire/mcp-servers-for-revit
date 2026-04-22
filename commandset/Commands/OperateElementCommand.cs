@@ -34,27 +34,27 @@ namespace RevitMCPCommandSet.Commands
             try
             {
                 OperationSetting data = new OperationSetting();
-                // 解析参数
+                // Parse parameters
                 data = parameters["data"].ToObject<OperationSetting>();
                 if (data == null)
-                    throw new ArgumentNullException(nameof(data), "AI传入数据为空");
+                    throw new ArgumentNullException(nameof(data), "Input data was null");
 
-                // 设置点状构件体参数
+                // Forward to the handler
                 _handler.SetParameters(data);
 
-                // 触发外部事件并等待完成
+                // Raise the external event and wait for completion
                 if (RaiseAndWaitForCompletion(10000))
                 {
                     return _handler.Result;
                 }
                 else
                 {
-                    throw new TimeoutException("操作元素超时");
+                    throw new TimeoutException("operate_element timed out");
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"操作元素失败: {ex.Message}");
+                throw new Exception($"operate_element failed: {ex.Message}");
             }
         }
     }

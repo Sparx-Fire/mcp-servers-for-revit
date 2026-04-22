@@ -23,36 +23,52 @@ namespace RevitMCPCommandSet.Commands.Delete
             {
                 try
                 {
-                    // 解析数组参数
+                    // Parse the array parameter
                     var elementIds = parameters?["elementIds"]?.ToObject<string[]>();
                     if (elementIds == null || elementIds.Length == 0)
                     {
-                        throw new ArgumentException("元素ID列表不能为空");
+                        throw new ArgumentException("elementIds list must not be empty");
                     }
 
-                    // 设置要删除的元素ID数组
+                    // Forward input to the handler
                     _handler.ElementIds = elementIds;
 
-                    // 触发外部事件并等待完成
+                    // Raise the external event and wait
                     if (RaiseAndWaitForCompletion(15000))
                     {
                         if (_handler.IsSuccess)
                         {
-                            return new { deleted = true, count = _handler.DeletedCount };
+                            // Return structured counts so the caller can
+                            // distinguish direct deletions from cascades.
+                            // Previously only the total was returned, which
+                            // hid cascade side-effects from the user.
+                            return new
+                            {
+                                deleted = true,
+                                totalDeletedCount  = _handler.DeletedCount,
+                                directDeletedCount = _handler.DirectDeletedCount,
+                                cascadeDeletedCount = _handler.CascadeDeletedCount,
+                                invalidIds = _handler.InvalidIds
+                            };
                         }
                         else
                         {
-                            throw new Exception("删除元素失败");
+                            // Handler already formatted the failure reason;
+                            // propagate it rather than masking with a generic.
+                            var msg = string.IsNullOrEmpty(_handler.ErrorMessage)
+                                ? "Delete operation failed."
+                                : _handler.ErrorMessage;
+                            throw new Exception(msg);
                         }
                     }
                     else
                     {
-                        throw new TimeoutException("删除元素操作超时");
+                        throw new TimeoutException("Delete operation timed out");
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception($"删除元素失败: {ex.Message}");
+                    throw new Exception($"Delete failed: {ex.Message}");
                 }
             }
         }
