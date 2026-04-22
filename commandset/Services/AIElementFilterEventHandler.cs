@@ -51,31 +51,43 @@ namespace RevitMCPCommandSet.Services
             try
             {
                 var elementInfoList = new List<object>();
-                // 检查过滤器设置是否有效
+                // Validate filter settings
                 if (!FilterSetting.Validate(out string errorMessage))
                     throw new Exception(errorMessage);
-                // 获取指定条件元素的Id
+                // Collect all matching elements
                 var elementList = GetFilteredElements(doc, FilterSetting);
                 if (elementList == null || !elementList.Any())
-                    throw new Exception("未在项目中找到指定元素，请检查过滤器设置是否正确");
-                // 过滤器最大个数限制
-                string message = "";
-                if (FilterSetting.MaxElements > 0)
+                    throw new Exception("No matching elements found in project. Check the filter settings.");
+
+                // Record the TOTAL match count BEFORE truncation. This is the fix
+                // for the count-after-Take bug: previously the message reused
+                // elementList.Count after the Take() call, which returned the
+                // truncated length (e.g. "50 of 50") instead of the real total.
+                int totalMatchCount = elementList.Count;
+                bool truncated = false;
+                if (FilterSetting.MaxElements > 0 && elementList.Count > FilterSetting.MaxElements)
                 {
-                    if (elementList.Count > FilterSetting.MaxElements)
-                    {
-                        elementList = elementList.Take(FilterSetting.MaxElements).ToList();
-                        message = $"。此外，符合过滤条件的共有 {elementList.Count} 个元素，仅显示前 {FilterSetting.MaxElements} 个";
-                    }
+                    elementList = elementList.Take(FilterSetting.MaxElements).ToList();
+                    truncated = true;
                 }
 
-                // 获取指定Id元素的信息
+                // Build the info list from the (possibly truncated) element list
                 elementInfoList = GetElementFullInfo(doc, elementList);
+
+                string message;
+                if (truncated)
+                {
+                    message = $"Matched {totalMatchCount} elements; returning the first {FilterSetting.MaxElements}. Raise maxElements if you need all of them. Details for the returned subset are in the Response property.";
+                }
+                else
+                {
+                    message = $"Matched {totalMatchCount} elements. Details are in the Response property.";
+                }
 
                 Result = new AIResult<List<object>>
                 {
                     Success = true,
-                    Message = $"成功获取{elementInfoList.Count}个元素信息，具体信息储存在Response属性中"+ message,
+                    Message = message,
                     Response = elementInfoList,
                 };
             }
@@ -84,7 +96,7 @@ namespace RevitMCPCommandSet.Services
                 Result = new AIResult<List<object>>
                 {
                     Success = false,
-                    Message = $"获取元素信息时出错: {ex.Message}",
+                    Message = $"Failed to get element info: {ex.Message}",
                 };
             }
             finally
@@ -109,7 +121,7 @@ namespace RevitMCPCommandSet.Services
         /// </summary>
         public string GetName()
         {
-            return "获取元素信息";
+            return "Get Element Info";
         }
 
         /// <summary>
@@ -199,7 +211,7 @@ namespace RevitMCPCommandSet.Services
                 BuiltInCategory category;
                 if (!Enum.TryParse(settings.FilterCategory, true, out category))
                 {
-                    throw new ArgumentException($"无法将 '{settings.FilterCategory}' 转换为有效的Revit类别。");
+                    throw new ArgumentException($"Cannot convert '{settings.FilterCategory}' to a valid Revit BuiltInCategory.");
                 }
                 ElementCategoryFilter categoryFilter = new ElementCategoryFilter(category);
                 filters.Add(categoryFilter);
@@ -227,11 +239,11 @@ namespace RevitMCPCommandSet.Services
                 {
                     ElementClassFilter classFilter = new ElementClassFilter(elementType);
                     filters.Add(classFilter);
-                    appliedFilters.Add($"元素类型：{elementType.Name}");
+                    appliedFilters.Add($"ElementType: {elementType.Name}");
                 }
                 else
                 {
-                    throw new Exception($"警告：无法找到类型 '{settings.FilterElementType}'");
+                    throw new Exception($"Cannot find Revit element type '{settings.FilterElementType}'.");
                 }
             }
             // 3. 族符号过滤器 (仅适用于元素实例)

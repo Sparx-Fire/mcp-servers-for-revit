@@ -10,11 +10,13 @@ export function registerGetSelectedElementsTool(server: McpServer) {
       limit: z
         .number()
         .optional()
-        .describe("Maximum number of elements to return"),
+        .describe(
+          "Maximum number of elements to return. Defaults to 100000 so a large user selection is not silently truncated; pass a smaller value if you only need a sample."
+        ),
     },
     async (args, extra) => {
       const params = {
-        limit: args.limit || 100,
+        limit: args.limit || 100000,
       };
 
       try {

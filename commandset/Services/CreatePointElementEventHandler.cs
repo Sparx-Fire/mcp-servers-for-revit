@@ -229,36 +229,37 @@ namespace RevitMCPCommandSet.Services
             }
             catch (Exception ex)
             {
+                // Previous behavior also popped a blocking TaskDialog; removed
+                // because it wedged Revit's UI thread on every creation error.
                 Result = new AIResult<List<int>>
                 {
                     Success = false,
-                    Message = $"创建点状构件时出错: {ex.Message}",
+                    Message = $"Failed to create point-based element: {ex.Message}",
                 };
-                TaskDialog.Show("错误", $"创建点状构件时出错: {ex.Message}");
             }
             finally
             {
-                _resetEvent.Set(); // 通知等待线程操作已完成
+                _resetEvent.Set(); // Signal that operation completed
             }
         }
 
         /// <summary>
-        /// 等待创建完成
+        /// Wait for completion
         /// </summary>
-        /// <param name="timeoutMilliseconds">超时时间（毫秒）</param>
-        /// <returns>操作是否在超时前完成</returns>
+        /// <param name="timeoutMilliseconds">Timeout in milliseconds</param>
+        /// <returns>True if completed before the timeout</returns>
         public bool WaitForCompletion(int timeoutMilliseconds = 10000)
         {
             _resetEvent.Reset();
-        return _resetEvent.WaitOne(timeoutMilliseconds);
+            return _resetEvent.WaitOne(timeoutMilliseconds);
         }
 
         /// <summary>
-        /// IExternalEventHandler.GetName 实现
+        /// IExternalEventHandler.GetName implementation
         /// </summary>
         public string GetName()
         {
-            return "创建点状构件";
+            return "Create Point-Based Element";
         }
 
     }

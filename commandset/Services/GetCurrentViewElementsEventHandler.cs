@@ -162,7 +162,8 @@ namespace RevitMCPCommandSet.Services
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("error", ex.Message);
+                // TaskDialog removed — it blocked Revit UI on errors.
+                System.Diagnostics.Trace.WriteLine($"get_current_view_elements failed: {ex.Message}");
             }
             finally
             {
@@ -226,7 +227,7 @@ namespace RevitMCPCommandSet.Services
 
         public string GetName()
         {
-            return "获取当前视图元素";
+            return "Get Current View Elements";
         }
     }
 }
